@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:chat_app_provider/config/config.dart';
+import 'package:chat_app_provider/presentation/models/models.dart';
 import 'package:chat_app_provider/presentation/providers/providers.dart';
 import 'package:chat_app_provider/presentation/services/services.dart';
 import 'package:chat_app_provider/presentation/widgets/widgets.dart';
@@ -34,11 +35,33 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     authService = Provider.of<AuthService>(context, listen: false);
 
     socketService!.socket.on('personal-message', _listenMessage);
+
+    _loadMessageHistory(chatService!.userReceiving!.uid);
+  }
+
+  void _loadMessageHistory(String userId) async {
+    List<Message> chat = await chatService!.getChats(userId);
+
+    // print(chat);
+
+    // Toma el historial de chat y lo mapea a un ChatMessage
+    final history = chat.map((m) => ChatMessage(
+          text: m.message,
+          uid: m.de,
+          animationController: AnimationController(
+              vsync: this, duration: const Duration(milliseconds: 0))
+            ..forward(),
+        ));
+
+    // Inserta el historial de chat.
+    setState(() {
+      _messages.insertAll(0, history);
+    });
   }
 
   void _listenMessage(dynamic payload) {
     ChatMessage message = ChatMessage(
-      uid: payload['para'],
+      uid: payload['de'],
       text: payload['message'],
       animationController: AnimationController(
         vsync: this,
@@ -189,11 +212,11 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
 
   @override
   void dispose() {
-    // todo: off del socket
-
     for (ChatMessage message in _messages) {
       message.animationController.dispose();
     }
+
+    socketService!.socket.off('personal-message');
     super.dispose();
   }
 }

@@ -32,11 +32,11 @@ class ChatMessage extends StatelessWidget {
         child: Container(
           child: isMyMessage
               ? MyMessage(
-                  message: '${authService.usuario!.nombre}: $text',
+                  message: text,
                   uid: uid,
                 )
               : IncomingMessage(
-                  message: '${authService.usuario!.nombre}: $text',
+                  message: text,
                   uid: uid,
                 ),
         ),
